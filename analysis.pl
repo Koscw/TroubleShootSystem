@@ -1,6 +1,8 @@
 
 :- dynamic(status/2).
 
+fault(outlet_issue) :-
+    status(outlet_works, no).
 
 fault(power_adapter_dead) :-
     status(led_power, off),
@@ -8,8 +10,8 @@ fault(power_adapter_dead) :-
     status(outlet_works, yes).
 
 fault(cable_disconnected) :-
-    status(led_power, off),
-    status(cable_plugged, no).
+    status(cable_plugged, no),
+    status(outlet_works, yes).
 
 
 fault(isp_connection_issue) :-
