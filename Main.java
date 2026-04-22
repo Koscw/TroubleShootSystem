@@ -33,7 +33,7 @@ public class Main {
             pb.redirectErrorStream(true);
             Process process = pb.start();
 
-            // 4. Читаем ответ
+
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {
