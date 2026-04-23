@@ -16,7 +16,7 @@ public class Main {
 
 
 
-            File tempFacts = new File("src/main/java/org/example/temp_facts.pl");
+            File tempFacts = new File("src/main/resources/prolog/temp_facts.pl");
             try (PrintWriter out = new PrintWriter(tempFacts)) {
                 for (Map.Entry<String, String> entry : statuses.entrySet()) {
                     out.println("status(" + entry.getKey() + ", " + entry.getValue() + ").");
@@ -26,8 +26,8 @@ public class Main {
 
             ProcessBuilder pb = new ProcessBuilder(
                     "gprolog",
-                    "--consult-file", "src/main/java/org/example/analysis.pl",
-                    "--consult-file", "src/main/java/org/example/temp_facts.pl",
+                    "--consult-file", "src/main/resources/prolog/analysis.pl",
+                    "--consult-file", "src/main/resources/prolog/temp_facts.pl",
                     "--query-goal", "run_diagnose"
             );
             pb.redirectErrorStream(true);
