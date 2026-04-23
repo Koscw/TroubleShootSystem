@@ -75,6 +75,6 @@ report(printer_drivers_issue) :-
 
 report(printer_head_dirty) :-
     write('Printer head is dirty, run head cleaning program'), nl.
-
+%
 */
 
