@@ -44,7 +44,7 @@ public class Main {
             }
 
             process.waitFor();
-            //tempFacts.delete();
+            ///tempFacts.delete();
 
         } catch (Exception e) {
             System.out.println("Exception-> "+e);
