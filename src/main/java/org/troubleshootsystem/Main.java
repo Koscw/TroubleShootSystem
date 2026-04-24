@@ -1,45 +1,28 @@
 package org.troubleshootsystem;
+import org.troubleshootsystem.bridge.LispSession;
+import org.troubleshootsystem.bridge.PrologPipe;
+import org.troubleshootsystem.bridge.PrologSession;
 
 import java.io.*;
-import java.util.*;
 
 public class Main {
     public static void main(String[] args) throws IOException, InterruptedException {
-        Map<String, String> statuses = new HashMap<>();
 
-        statuses.put("outlet_works", "yes");
-        statuses.put("cable_plugged", "yes");
-        statuses.put("led_power", "on");
-        statuses.put("led_internet", "green");
-        statuses.put("paper_jammed", "yes");
+        PrologPipe pipe = new PrologPipe("prolog_arguments_tmp.pl");
 
-        File tempFacts = new File("src/main/resources/prolog/temp_facts.pl");
-        try (PrintWriter out = new PrintWriter(tempFacts)) {
-            for (Map.Entry<String, String> entry : statuses.entrySet()) {
-                out.println("status(" + entry.getKey() + ", " + entry.getValue() + ").");
-            }
-        }
+        pipe.addArgument("outlet_works", "yes");
+        pipe.addArgument("cable_plugged", "yes");
+        pipe.addArgument("led_power", "on");
+        pipe.addArgument("led_internet", "green");
+        pipe.addArgument("paper_jammed", "yes");
 
+        PrologSession prolog = new PrologSession("src/main/resources/analysis.pl", pipe);
+        String prompt = prolog.execute();
+        System.out.println(prompt);
 
-        ProcessBuilder pb = new ProcessBuilder(
-                "gprolog",
-                "--consult-file", "src/main/resources/prolog/analysis.pl",
-                "--consult-file", "src/main/resources/prolog/temp_facts.pl",
-                "--query-goal", "run_diagnose"
-        );
-        pb.redirectErrorStream(true);
-        Process process = pb.start();
+        LispSession lisp = new LispSession("src/main/resources/reparir.lisp");
 
+        System.out.println(lisp.execute(prompt));
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String line;
-        while ((line = reader.readLine()) != null) {
-            if (line.startsWith("RESULT:")) {
-                String cause = line.substring(7);
-                System.out.println("Prolog found the cause of the problem-> " + cause);
-            }
-        }
-
-        process.waitFor();
     }
 }
