@@ -1,3 +1,10 @@
+package org.troubleshootsystem;
+
+import org.troubleshootsystem.bridge.IFilePipe;
+import org.troubleshootsystem.bridge.LispSession;
+import org.troubleshootsystem.bridge.PrologPipe;
+import org.troubleshootsystem.bridge.PrologSession;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
@@ -10,7 +17,19 @@ public class Troubleshooter extends JFrame {
     private Map<String, String> status;
     private String currentDevice;
 
+    private PrologSession prologSession;
+    private LispSession lispSession;
+    private PrologPipe pipe;
+
+
+    String lispPath = "src/main/resources/Lisp/RecursiveTree.lisp";
+
     public Troubleshooter() {
+
+        pipe = new PrologPipe("src/main/resources/prolog/prolog_arguments_tmp.pl");
+        prologSession = new PrologSession("src/main/resources/prolog/analysis.pl", pipe);
+        lispSession = new LispSession("src/main/resources/Lisp/RecursiveTree.lisp");
+
         setTitle("Router & Printer Troubleshooter");
         setSize(1000, 900);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -41,12 +60,12 @@ public class Troubleshooter extends JFrame {
         Font buttonFont = new Font("SansSerif", Font.BOLD, 25);
 
         routerButton.setBackground(Color.decode("#070049"));
-        routerButton.setForeground(Color.WHITE);
+        //routerButton.setForeground(Color.WHITE"));
         routerButton.setFocusPainted(false);
         routerButton.setFont(buttonFont);
 
         printerButton.setBackground(Color.decode("#070049"));
-        printerButton.setForeground(Color.WHITE);
+        //printerButton.setForeground(Color.WHITE);
         printerButton.setFont(buttonFont);
 
         routerButton.addActionListener(e -> startTroubleshooting("Router"));
@@ -135,12 +154,12 @@ public class Troubleshooter extends JFrame {
         Dimension bigButtonSize = new Dimension(225, 200);
 
         button1.setBackground(Color.decode("#070049"));
-        button1.setForeground(Color.WHITE);
+        //button1.setForeground(Color.WHITE);
         button1.setFont(buttonFont);
         button1.setPreferredSize(bigButtonSize);
 
         button2.setBackground(Color.decode("#070049"));
-        button2.setForeground(Color.WHITE);
+        //button2.setForeground(Color.WHITE);
         button2.setFont(buttonFont);
         button2.setPreferredSize(bigButtonSize);
 
@@ -162,10 +181,10 @@ public class Troubleshooter extends JFrame {
     }
 
     private void evaluateAndShowResult() {
-        sendToProlog(status);
-        sendToLisp(status);
+        String errorCode = sendToProlog(status);
+        String solution = sendToLisp(errorCode);
 
-        String issue = getMockDiagnosis(status);
+        //String issue = getMockDiagnosis(status);
 
         JPanel resultPanel = new JPanel(new GridLayout(3, 1, 10, 10));
         resultPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -176,21 +195,33 @@ public class Troubleshooter extends JFrame {
         titleLabel.setForeground(Color.decode("#ffffff"));
         titleLabel.setFont(new Font("Arial", Font.BOLD, 40));
 
+        JLabel codeLabel = new JLabel("Error Code: " + errorCode, SwingConstants.CENTER);
+        codeLabel.setForeground(Color.CYAN);
+        codeLabel.setFont(new Font("Arial", Font.PLAIN, 20));
+
+        JLabel solutionLabel = new JLabel("<html><center>Solution: " + solution + "</center></html>", SwingConstants.CENTER);
+        solutionLabel.setForeground(Color.GREEN);
+        solutionLabel.setFont(new Font("Arial", Font.BOLD, 22));
+        /**
         JLabel issueLabel = new JLabel("Diagnosis: " + issue, SwingConstants.CENTER);
         issueLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         issueLabel.setForeground(Color.decode("#ff0000"));
         issueLabel.setFont(new Font("Arial", Font.BOLD, 25));
+        **/
 
         JButton restartButton = new JButton("Restart");
         Font buttonFont = new Font("SansSerif", Font.BOLD, 35);
         restartButton.setBackground(Color.decode("#070049"));
-        restartButton.setForeground(Color.WHITE);
+        //restartButton.setForeground(Color.WHITE);
         restartButton.setFont(buttonFont);
         restartButton.addActionListener(e -> cardLayout.show(mainPanel, "StartScreen"));
 
         resultPanel.add(titleLabel);
-        resultPanel.add(issueLabel);
+        //resultPanel.add(issueLabel);
+        resultPanel.add(codeLabel);
+        resultPanel.add(solutionLabel);
         resultPanel.add(restartButton);
+
 
         mainPanel.add(resultPanel, "ResultScreen");
         cardLayout.show(mainPanel, "ResultScreen");
@@ -198,24 +229,36 @@ public class Troubleshooter extends JFrame {
 
     // Prolog and Lisp
 
-    private void sendToProlog(Map<String, String> currentStatus) {
-        System.out.println("*Sending Data to Prolog*");
-        for (Map.Entry<String, String> entry : currentStatus.entrySet()) {
-            System.out.println("Prolog State -> " + entry.getKey() + ": " + entry.getValue());
+    private String sendToProlog(Map<String, String> currentStatus) {
+        try{
+            pipe.cleanUp();
+
+            for (Map.Entry<String, String> entry : currentStatus.entrySet()) {
+                pipe.addArgument(entry.getKey(), entry.getValue().toLowerCase());
+            }
+
+            String raw = prologSession.execute();
+            return raw.replace("RESULT:","").trim();
+        } catch (Exception e){
+            e.printStackTrace();
+            return "Prolog Error" + e.getMessage();
         }
+
+
     }
 
-    private void sendToLisp(Map<String, String> currentStatus) {
-        System.out.println("*Sending Data to Lisp*");
-        System.out.print("Lisp State -> (");
-        for (Map.Entry<String, String> entry : currentStatus.entrySet()) {
-             System.out.print("(" + entry.getKey() + " . " + entry.getValue() + ") ");
+    private String sendToLisp(String errorCode) {
+        try{
+            String raw = lispSession.lispExecute(errorCode);
+            return raw.replace("RESULT:","").trim();
+        } catch (Exception e){
+            e.printStackTrace();
+            return "Lisp Error" + e.getMessage();
         }
-        System.out.println(")");
     }
 
     // Backend just in case
-
+    /** No longer required
     private String getMockDiagnosis(Map<String, String> s) {
         if ("No".equals(s.get("outlet_works"))) return "Outlet Issue";
         if ("Yes".equals(s.get("outlet_works")) && "No".equals(s.get("cable_plugged"))) return "Cable is disconnected";
@@ -232,7 +275,7 @@ public class Troubleshooter extends JFrame {
 
         return "Issue is unknown / No problems found";
     }
-
+    **/
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             Troubleshooter app = new Troubleshooter();

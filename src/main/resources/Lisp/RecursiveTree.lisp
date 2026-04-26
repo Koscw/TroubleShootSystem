@@ -18,7 +18,7 @@
     (cond
         ((null issues_tree) nil) 
         ((atom issues_tree) nil) 
-        ((and (atom (car issues_tree)) (string-equal (car issues_tree) error_code)) (cadr issues_tree)) 
+        ((and (symbolp (car issues_tree)) (string-equal (symbol-name (car issues_tree)) error_code)) (cadr issues_tree))
         (t
             (let ((found_in_branch (find_solution (car issues_tree) error_code)))
             (if found_in_branch 
@@ -30,9 +30,18 @@
     )
 )
 
-(let ((args sb-ext:*posix-argv*))
+(defun find_and_print (error-code)
+  (let ((result (find_solution *manual* error-code)))
+    (if result
+        (format t "RESULT:~a~%" result)
+        (format t "RESULT:Error code not found: ~a~%" error-code))
+    (finish-output)))
 
-    (if (> (length args) 2) 
+
+
+#|(let ((args sb-ext:*posix-argv*))
+
+    (if (> (length args) 2)
 
         (let* 
             ((error-code (car (last args)))
@@ -44,6 +53,7 @@
             )
         )
 
-        (format t "RESULT: No error code provided.~%")
+        (format t "RESULT:No error code provided.~%")
     )
 )
+|#

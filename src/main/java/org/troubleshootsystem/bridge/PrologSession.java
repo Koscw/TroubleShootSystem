@@ -11,8 +11,8 @@ public class PrologSession {
                 "gprolog",
                 "--consult-file", executable_path,
                 "--consult-file", filePipe.getPath(),
-                "--query-goal", "run_diagnose",
-                "--entry-goal", "halt(0)"
+                "--query-goal", "run_diagnose"
+                //"--entry-goal", "halt(0)"
         );
 
         builder.redirectErrorStream(true);

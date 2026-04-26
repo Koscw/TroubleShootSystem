@@ -1,3 +1,5 @@
+/**
+
 package org.troubleshootsystem.bridge;
 
 import java.io.IOException;
@@ -27,10 +29,11 @@ public class LispSession {
         return result;
     }
 }
+**/
 
 /*  i dont know if this works or not. i barely understand it.
     would be helpful to check and use this because i dont think lisp works with swipl
-    
+*/
 package org.troubleshootsystem.bridge;
 import java.io.IOException;
 
@@ -42,15 +45,25 @@ public class LispSession {
         this.executablePath = executablePath;
     }
 
-    public String execute(String argument) throws IOException, InterruptedException {
+    public String lispExecute(String argument) throws IOException, InterruptedException {
         // The SBCL Execution Bridge
+    /**
         ProcessBuilder builder = new ProcessBuilder(
                 "sbcl",
                 "--script",
-                executablePath, 
-                argument        
+                executablePath,
+                argument
         );
+    **/
+        String lispCommand = String.format("(progn (find_and_print \"%s\") (sb-ext:exit))", argument);
 
+        ProcessBuilder builder = new ProcessBuilder(
+                "sbcl",
+                "--noinform",       // Убирает баннер
+                "--non-interactive", // Не зависает при ошибках
+                "--load", executablePath,
+                "--eval", lispCommand
+        );
         // Armor: Merges error output with standard output so Java doesn't hang on a Lisp crash
         builder.redirectErrorStream(true);
 
@@ -64,4 +77,3 @@ public class LispSession {
         return result;
     }
 }
-*/

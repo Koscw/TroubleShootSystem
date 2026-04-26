@@ -33,7 +33,14 @@ public class PrologPipe extends FilePipe {
 
     @Override
     public void cleanUp() {
-        super.cleanUp();
+        //super.cleanUp();
+
+        try{
+            new java.io.PrintWriter(getPath()).close();
+        } catch (java.io.IOException e){
+
+        }
         arguments.clear();
+
     }
 }
